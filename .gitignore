@@ -1,0 +1,9 @@
+.aidd/cache/
+__pycache__/
+.cache/
+*.pyc
+data/corpus.jsonl
+data/known_classes.json
+data/model.pkl
+data/vectorizer.pkl
+
