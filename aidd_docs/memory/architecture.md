@@ -8,35 +8,62 @@ scope: all
 
 ## Language/Framework
 
-Python CLI tool — no package manifest. Invoked directly via `python scripts/summarize.py`.
+Python CLI tool — no package manifest. Scripts invoked directly via `python scripts/<script>.py`.
 
 ```mermaid
 ---
-title: summarize-emails architecture
+title: email-to-python-tools architecture
 ---
 flowchart LR
-    CLI["CLI (scripts/summarize.py)"]
-    FileIO["File I/O (to-summarize/ → summarized/)"]
-    Config["Config (config/config.yaml)"]
-    LLM["LLM API"]
+    IMAP["IMAP emails (via email-to-markdown)"]
+    Classify["scripts/classify.py"]
+    Summarize["scripts/summarize.py"]
+    Reorganize["scripts/reorganize.py"]
+    Classifier["src/folder_classifier.py"]
+    Config["config/config.yaml"]
+    LLMOllama["Ollama (cold start, free)"]
+    LLMAnthropic["Anthropic API (summaries)"]
+    Tree["Classified folder tree"]
+    Notes["Summary notes"]
 
-    CLI --> FileIO
-    CLI --> Config
-    CLI --> LLM
+    IMAP --> Classify
+    IMAP --> Summarize
+    Classify --> Classifier
+    Summarize --> Classifier
+    Classifier --> LLMOllama
+    Summarize --> LLMAnthropic
+    Classify --> Tree
+    Summarize --> Notes
+    Summarize --> Tree
+    Reorganize --> Tree
+    Config --> Classify
+    Config --> Summarize
+    Config --> Reorganize
 ```
 
-## Project Structure
+## Scripts
 
-```
-summarize-emails/
-├── scripts/
-│   ├── summarize.py          # Main entry point
-│   └── validate_format.py    # Input validation
-├── to-summarize/             # Input email files
-├── summarized/               # Output summaries
-└── config/
-    └── config.yaml           # Configuration (model, prompts, paths)
-```
+| Script | Role |
+|---|---|
+| `scripts/summarize.py` | Pipeline complet : parse → déduplique → catégorise → groupe → résume → classe |
+| `scripts/classify.py` | Classement interactif des emails bruts dans l'arborescence |
+| `scripts/reorganize.py` | Restructuration interactive de l'arborescence (renommer/fusionner/déplacer) |
+| `scripts/validate_format.py` | Validation du format des fichiers .md d'entrée |
+
+## src/ Modules
+
+| Module | Role |
+|---|---|
+| `src/parser.py` | Parse les .md emails (frontmatter YAML → dict) |
+| `src/categorizer.py` | Catégorise : travail / notification / newsletter / associatif |
+| `src/deduplicator.py` | Déduplique par (subject_hash, sender) |
+| `src/grouper.py` | Groupe par catégorie + clé (sujet normalisé ou expéditeur) |
+| `src/age.py` | Calcule l'âge d'un email en jours |
+| `src/archiver.py` | Déplace ou supprime les fichiers sources |
+| `src/llm.py` | Wrapper Anthropic API (classify_email) |
+| `src/folder_classifier.py` | Classifieur de dossiers : Ollama cold start + BernoulliNB incrémental |
+| `src/config.py` | `load_config()` partagé entre tous les scripts |
+| `src/summarizers/` | Résumeurs par catégorie (travail, notification, newsletter, associatif) |
 
 ## Naming Conventions
 
