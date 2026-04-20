@@ -66,13 +66,29 @@ def record_decision(email: dict, path: str, config: dict) -> None:
 
     model, vectorizer = _load_model(data_dir)
     if model is None or vectorizer is None:
+        logger.info("Modèle non trouvé, reconstruction depuis le corpus...")
         rebuild_model_from_corpus(data_dir)
         return
 
     features = _extract_features(entry)
     X = vectorizer.transform([features])
-    model.partial_fit(X, [path], classes=all_known_classes)
+    
+    # Ensure classes are consistent with existing model classes
+    existing_classes = list(model.classes_)
+    if set(all_known_classes) != set(existing_classes):
+        # Rebuild model if new classes are added
+        logger.info("Nouvelle classe détectée, reconstruction du modèle...")
+        rebuild_model_from_corpus(data_dir)
+        model, vectorizer = _load_model(data_dir)
+        if model is None or vectorizer is None:
+            return
+        # Retransform features with the new vectorizer
+        X = vectorizer.transform([features])
+    
+    # Use the existing model classes to avoid mismatch
+    model.partial_fit(X, [path], classes=None)
     _save_model(model, vectorizer, data_dir)
+    logger.info("Modèle mis à jour avec la décision utilisateur : %s", path)
 
 
 def rebuild_model_from_corpus(data_dir: Path) -> None:
@@ -81,10 +97,18 @@ def rebuild_model_from_corpus(data_dir: Path) -> None:
 
     corpus = _load_corpus(data_dir)
     if not corpus:
+        logger.warning("Corpus vide, impossible de reconstruire le modèle.")
         return
 
-    texts = [_extract_features(e) for e in corpus]
-    labels = [e["label"] for e in corpus]
+    logger.info("Reconstruction du modèle depuis %d exemples...", len(corpus))
+    # Filter out corrupted entries
+    valid_entries = [e for e in corpus if "label" in e and "subject" in e and "sender" in e]
+    if not valid_entries:
+        logger.warning("Aucune entrée valide dans le corpus, impossible de reconstruire le modèle.")
+        return
+    
+    texts = [_extract_features(e) for e in valid_entries]
+    labels = [e["label"] for e in valid_entries]
 
     vectorizer = TfidfVectorizer()
     X = vectorizer.fit_transform(texts)
@@ -93,6 +117,7 @@ def rebuild_model_from_corpus(data_dir: Path) -> None:
     model.fit(X, labels)
 
     _save_model(model, vectorizer, data_dir)
+    logger.info("Modèle reconstruit et sauvegardé avec succès.")
 
 
 def prompt_user(email: dict, proposed_path: str) -> str:
@@ -134,8 +159,10 @@ def _llm_propose_path(email: dict, cold_start_model: str) -> str:
 
         prompt = (
             "Tu es un assistant de classement d'emails. "
-            "Réponds uniquement par un chemin de dossier au format exact "
-            "\"Niveau1/Niveau2/Niveau3\", sans aucune explication ni ponctuation supplémentaire.\n\n"
+            "Réponds UNIQUEMENT par un chemin de dossier au format exact "
+            "'Niveau1/Niveau2/Niveau3'. "
+            "Exemples valides : 'Travail/Projets/ClientX', 'Personnel/Famille/Vacances'. "
+            "Ne retourne RIEN d'autre (pas d'explications, pas de ponctuation, pas de guillemets).\n\n"
             f"Sujet : {subject}\n"
             f"Expéditeur : {sender}\n"
             f"Type d'email : {email_type}\n\n"
@@ -149,8 +176,19 @@ def _llm_propose_path(email: dict, cold_start_model: str) -> str:
         raw = response["message"]["content"].strip()
         # Keep only the first line in case model adds extra text
         first_line = raw.splitlines()[0].strip() if raw else ""
+        
+        # Validation stricte du format
         if first_line.count("/") == 2:
-            return first_line
+            # Vérifier les caractères interdits
+            invalid_chars = ['?', '*', '"', '<', '>', '|']
+            if any(char in first_line for char in invalid_chars):
+                logger.warning("Chemin LLM invalide (caractères interdits) : %s", first_line)
+                return _rule_based_propose(email)
+            # Limiter la longueur des niveaux
+            parts = first_line.split("/")
+            if all(len(part.strip()) <= 50 for part in parts):
+                return first_line
+        logger.warning("Chemin LLM invalide (format) : %s", first_line)
         return _rule_based_propose(email)
     except Exception as exc:
         logger.debug("LLM propose échoué: %s", exc)
@@ -205,6 +243,7 @@ def _load_model(data_dir: Path) -> tuple[Any, Any]:
 def _save_model(model: Any, vectorizer: Any, data_dir: Path) -> None:
     import joblib
 
-    data_dir.mkdir(parents=True, exist_ok=True)
-    joblib.dump(model, data_dir / "model.pkl")
-    joblib.dump(vectorizer, data_dir / "vectorizer.pkl")
+    model_path = data_dir / "model.pkl"
+    vectorizer_path = data_dir / "vectorizer.pkl"
+    joblib.dump(model, model_path)
+    joblib.dump(vectorizer, vectorizer_path)

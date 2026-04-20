@@ -35,6 +35,37 @@ python scripts/classify.py [--config config/config.yaml] [--account NOM]
 
 **Commandes interactives :** `[Entrée]` accepter · `s` ignorer · `q` quitter · saisir un chemin alternatif
 
+#### Workflow de classement avec fallback vers Ollama
+
+```mermaid
+flowchart TD
+    A[Email à classer] --> B{Corpus suffisant ?}
+    B -->|Non| C[Appel à Ollama]
+    B -->|Oui| D[Modèle ML BernoulliNB]
+    D --> E{Confiance ≥ 0.75 ?}
+    E -->|Oui| F[Retourne le chemin ML]
+    E -->|Non| C
+    C --> G[Valider le format]
+    G -->|Valide| H[Retourne le chemin]
+    G -->|Invalide| I[Règles par défaut]
+    I --> H
+```
+
+**Détails :**
+- **Cold start** : Si le corpus contient moins de 20 exemples, Ollama est utilisé.
+- **Fallback dynamique** : Si la confiance du modèle ML est < 0.75, bascule vers Ollama.
+- **Validation stricte** : Le chemin retourné par Ollama doit respecter le format `Niveau1/Niveau2/Niveau3` (ex: `Travail/Projets/ClientX`).
+- **Caractères interdits** : `?`, `*`, `"`, `<`, `>`, `|`.
+- **Longueur maximale** : 50 caractères par niveau.
+
+**Exemple de configuration :**
+```yaml
+classify:
+  cold_start_model: "qwen3:8b"  # Modèle Ollama utilisé pour le fallback
+  confidence_threshold: 0.75     # Seuil de confiance pour le modèle ML
+  min_samples_before_ml: 20       # Nombre minimal d'exemples avant d'utiliser le ML
+```
+
 ### `scripts/reorganize.py` — Réorganiser l'arborescence
 
 Restructure interactivement l'arborescence de destination (renommer, fusionner, déplacer des branches). Met à jour automatiquement le corpus d'apprentissage.
@@ -61,6 +92,13 @@ pip install -r requirements.txt
 ```bash
 ollama pull qwen3:8b
 ```
+
+**Vérification de la configuration :**
+- Assurez-vous que `config/config.yaml` contient bien la clé `cold_start_model` :
+  ```yaml
+  classify:
+    cold_start_model: "qwen3:8b"  # Modèle utilisé pour le fallback
+  ```
 
 ## Configuration
 

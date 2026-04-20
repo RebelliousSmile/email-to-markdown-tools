@@ -2,6 +2,12 @@
 
 Ce fichier décrit comment utiliser Mistral Vibe avec le framework AIDD dans le projet.
 
+## Environnement d'Exécution
+
+- **Système d'exploitation** : La plupart des projets sont développés sous Windows.
+- **Terminal** : Les commandes sont exécutées dans PowerShell.
+- **Vérification initiale** : Avant d'exécuter des commandes, vérifiez l'OS et le terminal utilisé pour adapter les commandes.
+
 ## Framework AIDD
 
 Le projet utilise le framework **AIDD** (Agent-Integrated Development Framework), défini dans le répertoire `.opencode/`.
