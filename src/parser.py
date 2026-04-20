@@ -1,3 +1,9 @@
+"""Email parser module.
+
+This module provides functionality to parse email files with YAML frontmatter
+and extract relevant data into a structured format.
+"""
+
 from datetime import datetime
 from pathlib import Path
 from typing import TypedDict
@@ -9,6 +15,18 @@ VALID_EMAIL_TYPES = {"direct", "group", "mailing_list"}
 
 
 class EmailData(TypedDict):
+    """Typed dictionary representing the structure of an email.
+    
+    Attributes:
+        sender (str): The sender's email address.
+        to (str): The recipient's email address.
+        date (datetime): The date and time the email was sent.
+        subject (str): The subject of the email.
+        subject_hash (str | None): The hash of the subject, if available.
+        email_type (str | None): The type of the email (e.g., direct, group, mailing_list).
+        body (str): The body content of the email.
+        filepath (Path): The path to the email file.
+    """
     sender: str
     to: str
     date: datetime
@@ -20,6 +38,22 @@ class EmailData(TypedDict):
 
 
 def parse_email(filepath: Path) -> EmailData:
+    """Parse an email file with YAML frontmatter and extract relevant data.
+    
+    Args:
+        filepath (Path): The path to the email file to parse.
+        
+    Returns:
+        EmailData: A dictionary containing the parsed email data.
+        
+    Raises:
+        ValueError: If required fields are missing or unparseable.
+        
+    Example:
+        >>> email_data = parse_email(Path("email.md"))
+        >>> print(email_data["subject"])
+        "Test Subject"
+    """
     """Parse a .md file with YAML frontmatter into an EmailData dict.
 
     Raises ValueError if required fields are missing or unparseable.

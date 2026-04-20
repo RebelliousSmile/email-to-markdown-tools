@@ -13,7 +13,18 @@ _THREAD_PREFIX = re.compile(
 
 
 def _normalize_subject(subject: str) -> str:
-    """Strip thread prefixes, lowercase, and strip whitespace from a subject."""
+    """Normalize a subject by stripping thread prefixes, lowercasing, and removing whitespace.
+    
+    Args:
+        subject (str): The subject to normalize.
+        
+    Returns:
+        str: The normalized subject.
+        
+    Example:
+        >>> _normalize_subject("Re: Fwd: Meeting")
+        "meeting"
+    """
     result = subject.strip().lower()
     # Iteratively strip leading prefixes (handles "Re: Fwd: subject").
     while True:
@@ -26,12 +37,21 @@ def _normalize_subject(subject: str) -> str:
 
 def group_emails(emails: list[dict]) -> dict[str, list[dict]]:
     """Group emails by category into logical output groups.
-
+    
     Each email must already have a 'category' key set.
-
-    Returns a dict where:
-    - key: group_id string formatted as "{category}::{key}"
-    - value: list of emails belonging to that group
+    
+    Args:
+        emails (list[dict]): A list of email dictionaries to group.
+        
+    Returns:
+        dict[str, list[dict]]: A dictionary where:
+            - key: group_id string formatted as "{category}::{key}"
+            - value: list of emails belonging to that group
+        
+    Example:
+        >>> emails = [{"category": "travail", "subject": "Re: Meeting"}]
+        >>> group_emails(emails)
+        {"travail::meeting": [{"category": "travail", "subject": "Re: Meeting"}]}
     """
     groups: dict[str, list[dict]] = {}
 
