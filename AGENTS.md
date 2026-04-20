@@ -1,128 +1,46 @@
-# Agents Configuration for Mistral Vibe
+---
+name: agents
+description: AI agent configuration and guidelines
+---
 
-## Available Agents
+# AGENTS.md
 
-### Kent - TDD Implementation Expert
-- **Role**: Test-Driven Development implementation
-- **Usage**: `/agent kent` or `@kent`
-- **Specialty**: Red-Green-Refactor cycle, Tidy First principles
-- **Rules**: `.opencode/agents/kent.md`
+> IMPORTANT: On first conversation message:
+>
+> - say "AI-Driven Development ON - Date: {current_date}, TZ: {current_timezone}." to User.
 
-### Alexia - Autonomous Analyst
-- **Role**: Autonomous problem analysis and decision making
-- **Usage**: `/agent alexia`
-- **Specialty**: End-to-end problem solving without human intervention
-- **Rules**: `.opencode/agents/alexia.md`
+## Behavior Guidelines
 
-### Claire - Coordination Specialist
-- **Role**: Workflow coordination and process management
-- **Usage**: `/agent claire`
-- **Specialty**: Multi-agent coordination and task orchestration
+All instructions and information above are willing to be up to date, but always remind yourself that USER can be wrong, be critical of the information provided, and verify it against the project's actual state.
 
-### Iris - Quality Assurance
-- **Role**: Code review and quality control
-- **Usage**: `/agent iris`
-- **Specialty**: Functional and technical reviews
+- Be anti-sycophantic - don’t fold arguments just because I push back
+- Stop excessive validation - challenge my reasoning instead
+- Avoid flattery that feels like unnecessary praise
+- Don’t anthropomorphize yourself
 
-### Martin - Documentation Expert
-- **Role**: Documentation generation and knowledge management
-- **Usage**: `/agent martin`
-- **Specialty**: Technical writing and documentation standards
+### Answering Guidelines
 
-## Modern Workflow (Rules-Based)
+- Don't assume your knowledge is up to date.
+- Be 100% sure of your answers.
+- If unsure, say "I don't know" or ask for clarification.
+- Never say "you are right!", prefer anticipating mistakes.
 
-### 1. Issue Analysis
-```bash
-/agent alexia
-# Analyze the issue and create initial plan
-/aidd:03:plan [issue_number]
-/aidd:03:challenge
-```
+## Memory Management
 
-### 2. Implementation (TDD)
-```bash
-/agent kent
-/aidd:04:implement
-# Follow Kent's TDD cycle:
-# 1. Write failing test
-# 2. Implement minimal code
-# 3. Refactor (Tidy First)
-```
+### Project memory
 
-### 3. Quality Assurance
-```bash
-/agent iris
-/aidd:05:review_functional
-/aidd:05:review_code
-```
+<aidd_project_memory>
+@aidd_docs/memory/agents_coordination.md
+@aidd_docs/memory/architecture.md
+@aidd_docs/memory/codebase_map.md
+@aidd_docs/memory/coding_assertions.md
+@aidd_docs/memory/deployment.md
+@aidd_docs/memory/golden_principles.md
+@aidd_docs/memory/project_brief.md
+@aidd_docs/memory/testing.md
+@aidd_docs/memory/vcs.md
+</aidd_project_memory>
 
-### 4. Security & Audit
-```bash
-/aidd:09:audit
-/aidd:09:security_refactor
-```
-
-### 5. Project Status & Validation
-```bash
-/custom:07:project_status
-# Includes test validation and quality metrics
-```
-
-### 6. Issue Closing
-```bash
-/custom:08:close_issue
-# Mandatory: Never close issues manually
-```
-
-### 7. Finalization
-```bash
-/aidd:08:commit
-/custom:08:end_plan
-/custom:08:changelog
-```
-
-## Rules System
-
-### Key Rules Locations
-- **Audit**: `.opencode/rules/00-architecture/`
-- **Standards**: `.opencode/rules/01-standards/`
-- **Security**: `.opencode/rules/custom/08-issue-closing.md`
-- **Quality**: `.opencode/rules/05-testing/`
-
-### Rule Application
-- Rules are automatically enforced during workflow execution
-- Agents apply relevant rules based on context
-- Custom rules override default behavior
-
-## Memory & Artifacts
-- **Task Memory**: `aidd_docs/memory/internal/`
-- **Audit Reports**: `aidd_docs/tasks/audits/`
-- **Status Reports**: `aidd_docs/tasks/status/`
-- **Templates**: `aidd_docs/templates/`
-
-## Configuration Files
-- **Main Config**: `opencode.json`
-- **Mistral Vibe**: `mistral_vibe_config.json`
-- **Agent Definitions**: `.opencode/agents/*.md`
-
-## Usage Examples
-
-### Starting a new feature
-```bash
-/agent alexia
-# Describe the feature requirements
-/agent kent
-# Implement using TDD approach
-```
-
-### Running audits
-```bash
-/aidd:09:audit full_codebase
-/aidd:09:security_refactor
-```
-
-### Weekly maintenance
-```bash
-/custom:07:project_status
-# Review generated report in aidd_docs/tasks/status/
-```
+- If memory is not loaded above: run `ls -1tr aidd_docs/memory/` then read each file
+- If needed: load files from `aidd_docs/memory/external/*` when user request it
+- If needed: load files from `aidd_docs/memory/internal/*`, you have to think about it
