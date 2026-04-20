@@ -1,4 +1,4 @@
-.aidd/cache/
+.aidd/
 __pycache__/
 .cache/
 *.pyc
