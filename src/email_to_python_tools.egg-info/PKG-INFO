@@ -1,3 +1,11 @@
 Metadata-Version: 2.4
 Name: email-to-python-tools
 Version: 0.1.0
+Requires-Python: >=3.8
+Requires-Dist: python-frontmatter
+Requires-Dist: PyYAML
+Requires-Dist: anthropic
+Requires-Dist: scikit-learn
+Requires-Dist: ollama
+Dynamic: requires-dist
+Dynamic: requires-python

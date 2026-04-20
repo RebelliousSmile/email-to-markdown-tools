@@ -3,6 +3,7 @@ setup.py
 src/email_to_python_tools.egg-info/PKG-INFO
 src/email_to_python_tools.egg-info/SOURCES.txt
 src/email_to_python_tools.egg-info/dependency_links.txt
+src/email_to_python_tools.egg-info/requires.txt
 src/email_to_python_tools.egg-info/top_level.txt
 src/summarizers/__init__.py
 src/summarizers/associatif.py
