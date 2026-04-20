@@ -29,19 +29,54 @@ _ASSOCIATIF_KEYWORDS = re.compile(
 
 
 def _is_notification_sender(sender: str) -> bool:
-    """Return True when the sender address looks like an automated notification."""
+    """Check if the sender address looks like an automated notification.
+    
+    Args:
+        sender (str): The sender's email address.
+        
+    Returns:
+        bool: True if the sender address matches notification patterns, False otherwise.
+        
+    Example:
+        >>> _is_notification_sender("noreply@example.com")
+        True
+        >>> _is_notification_sender("john.doe@example.com")
+        False
+    """
     return bool(_NOTIFICATION_PATTERNS.search(sender))
 
 
 def _body_has_associatif_keywords(body: str) -> bool:
-    """Return True when the body contains associatif / civic content."""
+    """Check if the body contains associatif or civic content.
+    
+    Args:
+        body (str): The body content of the email.
+        
+    Returns:
+        bool: True if the body contains associatif keywords, False otherwise.
+        
+    Example:
+        >>> _body_has_associatif_keywords("Faites un don pour notre association")
+        True
+        >>> _body_has_associatif_keywords("Réunion de travail demain")
+        False
+    """
     return bool(_ASSOCIATIF_KEYWORDS.search(body))
 
 
 def categorize(email: dict) -> str:
-    """Return the category for an email dict.
-
-    Categories: travail | notification | newsletter | associatif
+    """Categorize an email based on its type and content.
+    
+    Args:
+        email (dict): A dictionary containing email data (e.g., sender, body, email_type).
+        
+    Returns:
+        str: The category of the email (travail, notification, newsletter, or associatif).
+        
+    Example:
+        >>> email = {"email_type": "mailing_list", "body": "Faites un don"}
+        >>> categorize(email)
+        "associatif"
     """
     email_type: str | None = email.get("email_type")
     sender: str = email.get("sender", "")
