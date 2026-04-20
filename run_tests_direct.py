@@ -1,0 +1,1 @@
+[{'key': 'value', 'another_key': 123}, {'key': 'value', 'another_key': 123}, {}, [], {')\n        \n        if passed == total:\n            print("All tests PASSED! ✓': 'return 0\n        else:\n            print(', ')\n            return 1\n            \n    except Exception as e:\n        print(': 'RROR running tests:', '__main__': 'sys.exit(main())'}]
