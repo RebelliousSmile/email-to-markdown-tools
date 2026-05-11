@@ -12,7 +12,6 @@ if sys.stderr.encoding and sys.stderr.encoding.lower() != "utf-8":
 
 import argparse
 import logging
-import os
 import shutil
 
 from src.config import load_config
@@ -27,15 +26,6 @@ from src.folder_classifier import propose_path, record_decision, prompt_user
 
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
-
-
-def _build_llm_client(config: dict):
-    import anthropic
-    api_key: str = (
-        config.get("llm", {}).get("api_key", "")
-        or os.environ.get("ANTHROPIC_API_KEY", "")
-    )
-    return anthropic.Anthropic(api_key=api_key)
 
 
 def _get_summarizer(category: str):
@@ -162,12 +152,9 @@ def main() -> None:
     # Prepare processed directory — from config, or sibling of input as fallback
     processed_dir = Path(default_processed_dir)
 
-    # Build LLM client once
-    try:
-        llm_client = _build_llm_client(config)
-    except Exception as exc:
-        logger.warning("Impossible de créer le client LLM: %s", exc)
-        llm_client = None
+    ollama_cfg = config.get("ollama", {})
+    ollama_model: str = ollama_cfg.get("model", "qwen3:8b")
+    ollama_url: str = ollama_cfg.get("url", "http://localhost:11434")
 
     generated = 0
     ignored = 0
@@ -195,12 +182,7 @@ def main() -> None:
                 continue
 
             # Generate filename
-            if llm_client is not None:
-                filename = make_filename(group_emails_list, category, llm_client)
-            else:
-                # Fallback: slugify subject of first email without LLM
-                from src.summarizers.filename import _fallback_filename
-                filename = _fallback_filename(group_emails_list, category)
+            filename = make_filename(group_emails_list, category, ollama_model, ollama_url)
 
             # Ensure no collision: append counter if needed
             output_path = output_dir / filename

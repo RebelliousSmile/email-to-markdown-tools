@@ -33,13 +33,14 @@ def _fallback_filename(group: list[dict], category: str) -> str:
     return f"group-{category}-{date_str}.md"
 
 
-def make_filename(group: list[dict], category: str, llm_client) -> str:
+def make_filename(group: list[dict], category: str, model: str, url: str) -> str:
     """Generate a filesystem-safe markdown filename for the summarized group.
 
     Args:
         group: List of email dicts.
         category: Email category string (travail, notification, newsletter, associatif).
-        llm_client: Anthropic client instance (used for multi-sender groups).
+        model: Ollama model name.
+        url: Ollama server URL.
 
     Returns:
         A filename string ending with '.md'. Never empty.
@@ -77,12 +78,13 @@ def make_filename(group: list[dict], category: str, llm_client) -> str:
             f"Subjects:\n{subjects_text}"
         )
         try:
-            message = llm_client.messages.create(
-                model="claude-haiku-4-5",
-                max_tokens=32,
+            import ollama
+            client = ollama.Client(host=url)
+            response = client.chat(
+                model=model,
                 messages=[{"role": "user", "content": prompt}],
             )
-            raw = message.content[0].text.strip()
+            raw = response.message.content.strip()
             slug = _slugify(raw, max_chars=60)
             if slug:
                 return f"{slug}.md"

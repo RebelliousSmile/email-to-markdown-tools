@@ -1,5 +1,4 @@
 python-frontmatter
 PyYAML
-anthropic
 scikit-learn
 ollama
