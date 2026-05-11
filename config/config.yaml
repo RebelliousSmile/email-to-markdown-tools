@@ -22,7 +22,7 @@ classify:
     - "attachments"
     - "sent"
     - "[Gmail]"
-  output_dir: "C:/Users/fxgui/Documents/Emails/classified"
+  output_dir: "C:/Users/fxgui/Public/Notes/Thunderbird"
   confidence_threshold: 0.75
   min_samples_before_ml: 20
   data_dir: "data"
