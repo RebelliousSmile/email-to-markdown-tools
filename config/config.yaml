@@ -8,7 +8,7 @@ thresholds:
   newsletter_days: 14
 
 paths:
-  input_dir: "C:/Users/fxgui/Documents/Emails/to-summarize"
+  input_dir: "C:/Users/fxgui/Documents/Emails/_local/to-summarize"
   processed_dir: "C:/Users/fxgui/Documents/Emails/processed"
   notes_dir: "C:/Users/fxgui/Public/Notes/Thunderbird"
 
