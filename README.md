@@ -88,6 +88,13 @@ python scripts/validate_format.py /chemin/vers/dossier/
 pip install -r requirements.txt
 ```
 
+> **PowerShell (Windows)** — ne pas utiliser `.venv\Scripts\python.exe` directement : PowerShell interprète le point initial comme un nom de module. Utiliser `&` ou `.\` :
+> ```powershell
+> & .venv\Scripts\python.exe scripts/classify.py
+> # ou
+> .\.venv\Scripts\python.exe scripts/classify.py
+> ```
+
 **Prérequis pour le classement :** [Ollama](https://ollama.com) installé et le modèle téléchargé :
 ```bash
 ollama pull qwen3:8b
