@@ -21,31 +21,58 @@ logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 
-def _collect_files(config: dict, account_filter: str | None) -> list[Path]:
+def _get_input_dirs(config: dict, account_filter: str | None) -> list[Path]:
     classify_cfg = config.get("classify", {})
-    input_dirs = classify_cfg.get("input_dirs", [])
+    result: list[Path] = []
+    for raw_dir in classify_cfg.get("input_dirs", []):
+        input_dir = Path(raw_dir)
+        if account_filter and account_filter not in input_dir.name:
+            continue
+        if input_dir.exists():
+            result.append(input_dir)
+        else:
+            logger.warning("Répertoire absent, ignoré: %s", input_dir)
+    return result
+
+
+def _collect_files(config: dict, input_dirs: list[Path]) -> list[Path]:
+    classify_cfg = config.get("classify", {})
     exclude_dirs = [d.lower() for d in classify_cfg.get("exclude_dirs", [])]
 
     files: list[Path] = []
-
-    for raw_dir in input_dirs:
-        input_dir = Path(raw_dir)
-
-        if account_filter and account_filter not in input_dir.name:
-            continue
-
-        if not input_dir.exists():
-            logger.warning("Répertoire absent, ignoré: %s", input_dir)
-            continue
-
+    for input_dir in input_dirs:
         for imap_folder in sorted(input_dir.iterdir()):
             if not imap_folder.is_dir():
                 continue
             if imap_folder.name.lower() in exclude_dirs:
                 continue
-            files.extend(sorted(imap_folder.glob("*.md")))
+            files.extend(sorted(imap_folder.rglob("*.md")))
 
     return files
+
+
+def _imap_hint(filepath: Path, input_dirs: list[Path]) -> list[str]:
+    """Return IMAP sub-folder levels that precede the file, minus the INBOX prefix.
+
+    Example: account/INBOX/medias/file.md  →  ["medias"]
+             account/INBOX/file.md         →  []
+             account/Sent/file.md          →  []
+    """
+    for input_dir in input_dirs:
+        try:
+            rel = filepath.parent.relative_to(input_dir)
+        except ValueError:
+            continue
+        parts = list(rel.parts)
+        # Strip top-level IMAP folder (e.g. INBOX, Sent) — keep only sub-levels
+        if parts:
+            top = parts[0]
+            sub = parts[1:]
+            # Only treat INBOX sub-folders as pre-classification hints
+            if top.upper() == "INBOX" and sub:
+                return sub
+        return []
+    return []
 
 
 def _unique_destination(dest: Path) -> Path:
@@ -72,7 +99,8 @@ def main() -> None:
     classify_cfg = config.get("classify", {})
     output_dir = Path(classify_cfg.get("output_dir", "classified"))
 
-    files = _collect_files(config, args.account)
+    input_dirs = _get_input_dirs(config, args.account)
+    files = _collect_files(config, input_dirs)
 
     if not files:
         print("Aucun fichier .md trouvé.")
@@ -83,7 +111,8 @@ def main() -> None:
     skipped = 0
     errors = 0
 
-    for filepath in files:
+    total = len(files)
+    for index, filepath in enumerate(files, start=1):
         try:
             email = parse_email(filepath)
         except Exception as exc:
@@ -91,8 +120,10 @@ def main() -> None:
             errors += 1
             continue
 
-        proposed_path = propose_path(email, config)
-        response = prompt_user(email, proposed_path)
+        imap_hint = _imap_hint(filepath, input_dirs)
+        proposed_path = propose_path(email, config, imap_hint)
+
+        response = prompt_user(email, proposed_path, index, total, output_dir, imap_hint)
 
         if response == "q":
             print(f"\nTraité: {classified + skipped + errors} emails -> {classified} classés, {skipped} ignorés, {errors} erreurs")
